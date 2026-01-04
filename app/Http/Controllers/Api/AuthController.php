@@ -41,16 +41,20 @@ class AuthController extends Controller
 
     public function refresh()
     {
-        return $this->respondWithToken(auth('api')->refresh());
-    }
+        try {
+            // Generate a new token from the current one
+            $newToken = auth()->refresh();
 
-    protected function respondWithToken(string $token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type'   => 'Bearer',
-            'expires_in'   => auth('api')->factory()->getTTL() * 60,
-            'user'         => auth('api')->user(),
-        ]);
+            return response()->json([
+                'access_token' => $newToken,
+                'token_type' => 'Bearer',
+                'expires_in' => auth()->factory()->getTTL() * 60,
+                'user' => auth()->user(),
+            ]);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json([
+                'message' => 'Token cannot be refreshed'
+            ], 401);
+        }
     }
 }
